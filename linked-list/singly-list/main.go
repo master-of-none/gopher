@@ -11,7 +11,7 @@ type LinkedList struct {
 	head *Node
 }
 
-func (list *LinkedList) InsertHead(val int) {
+func (list *LinkedList) insertAtHead(val int) {
 	newNode := &Node{value: val}
 
 	if list.head == nil {
@@ -22,6 +22,28 @@ func (list *LinkedList) InsertHead(val int) {
 	}
 }
 
+func (list *LinkedList) traverseList() {
+	cur := list.head
+
+	if cur == nil {
+		fmt.Println("Empty List")
+		return
+	}
+
+	fmt.Println("The Linked List is: ")
+	for cur != nil {
+		fmt.Printf("%d -> ", cur.value)
+		cur = cur.next
+	}
+	fmt.Println("-|")
+}
+
 func main() {
-	list :=
+	list := LinkedList{}
+
+	list.traverseList()
+	list.insertAtHead(30)
+	list.insertAtHead(20)
+	list.insertAtHead(10)
+	list.traverseList()
 }
