@@ -23,6 +23,22 @@ func (list *LinkedList) insertAtHead(val int) {
 	}
 }
 
+func (list *LinkedList) insertAtTail(val int) {
+	newNode := &Node{value: val}
+
+	if list.head == nil {
+		list.head = newNode
+	} else {
+		cur := list.head
+
+		for cur.next != nil {
+			cur = cur.next
+		}
+		cur.next = newNode
+		newNode.prev = cur
+	}
+}
+
 func (list *LinkedList) traverseList() {
 	cur := list.head
 

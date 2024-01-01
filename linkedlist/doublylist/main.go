@@ -8,4 +8,6 @@ func main() {
 	list.insertAtHead(20)
 	list.insertAtHead(10)
 	list.traverseList()
+	list.insertAtTail(40)
+	list.traverseList()
 }
