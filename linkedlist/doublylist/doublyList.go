@@ -39,6 +39,39 @@ func (list *LinkedList) insertAtTail(val int) {
 	}
 }
 
+func (list *LinkedList) deleteAtHead() {
+	if list.head == nil {
+		fmt.Println("Empty List")
+		return
+	}
+
+	if list.head.next == nil {
+		list.head = nil
+		return
+	}
+
+	list.head = list.head.next
+	list.head.prev = nil
+}
+
+func (list *LinkedList) deleteAtTail() {
+	if list.head == nil {
+		fmt.Println("Empty List")
+		return
+	}
+
+	if list.head.next == nil {
+		list.head = nil
+		return
+	}
+
+	cur := list.head
+	for cur.next != nil {
+		cur = cur.next
+	}
+	cur.prev.next = nil
+
+}
 func (list *LinkedList) traverseList() {
 	cur := list.head
 

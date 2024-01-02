@@ -10,4 +10,8 @@ func main() {
 	list.traverseList()
 	list.insertAtTail(40)
 	list.traverseList()
+	list.deleteAtHead()
+	list.traverseList()
+	list.deleteAtTail()
+	list.traverseList()
 }
