@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/master-of-none/gopher/go-backend/internal/auth"
 	"github.com/master-of-none/gopher/go-backend/internal/database"
 )
 
@@ -34,5 +35,23 @@ func (apiCfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Reques
 		respondWithError(w, 400, fmt.Sprintf("Cannot create user: %v", err))
 		return
 	}
+	respondWithJSON(w, 201, databaseUserToUser(user))
+}
+
+func (apiCfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
+	apiKey, err := auth.GetAPIKey(r.Header)
+
+	if err != nil {
+		respondWithError(w, 403, fmt.Sprintf("Auth error: %v", err))
+		return
+	}
+
+	user, err := apiCfg.DB.GetUserByAPIKey(r.Context(), apiKey)
+
+	if err != nil {
+		respondWithError(w, 400, fmt.Sprintf("Could not get user: %v", err))
+		return
+	}
+
 	respondWithJSON(w, 200, databaseUserToUser(user))
 }
