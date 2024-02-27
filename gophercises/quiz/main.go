@@ -5,13 +5,13 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 )
 
 func main() {
 	csvFileName := flag.String("csv", "problem.csv", "must be csv file")
 
 	flag.Parse()
-
 	file, err := os.Open(*csvFileName)
 
 	if err != nil {
@@ -27,7 +27,17 @@ func main() {
 	}
 
 	problems := parseLines(lines)
-	fmt.Println(problems)
+
+	correct := 0
+	for i, p := range problems {
+		fmt.Printf("Problem: %d: %s = \n", i+1, p.question)
+		var answer string
+		fmt.Scanf("%s\n", &answer)
+		if answer == p.answer {
+			correct++
+		}
+	}
+	fmt.Printf("The score is: %d out of %d \n", correct, len(problems))
 }
 
 type problem struct {
@@ -41,7 +51,7 @@ func parseLines(lines [][]string) []problem {
 	for i, line := range lines {
 		ret[i] = problem{
 			question: line[0],
-			answer:   line[1],
+			answer:   strings.TrimSpace(line[1]),
 		}
 	}
 
