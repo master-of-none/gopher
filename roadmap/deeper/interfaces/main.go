@@ -2,6 +2,10 @@ package main
 
 import "math"
 
+type shape interface {
+	area() float64
+}
+
 type circle struct {
 	radius float64
 }
@@ -41,4 +45,6 @@ func main() {
 	r1 := rectangle{3, 4}
 	s1 := square{5}
 	t1 := triangle{10, 5}
+
+	shapes := []shape{c1, r1, s1, t1}
 }
