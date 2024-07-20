@@ -20,6 +20,7 @@ var catCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		filename := args[0]
 		showNonBlankLineNum, _ := cmd.Flags().GetBool("number-notblank")
+		showLineNum, _ := cmd.Flags().GetBool("number")
 		file, err := os.Open(filename)
 
 		if err != nil {
@@ -35,6 +36,9 @@ var catCmd = &cobra.Command{
 			line := scanner.Text()
 			if showNonBlankLineNum && len(line) > 0 {
 				fmt.Printf("%5d  %s\n", lineNumber, line)
+				lineNumber++
+			} else if showLineNum {
+				fmt.Printf("%5d %s\n", lineNumber, line)
 				lineNumber++
 			} else if !showNonBlankLineNum {
 				fmt.Println(line)
@@ -52,6 +56,7 @@ func init() {
 
 	// Here you will define your flags and configuration settings.
 	catCmd.Flags().BoolP("number-notblank", "b", false, "Number of non blank output lines")
+	catCmd.Flags().BoolP("number", "n", false, "Number output lines")
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
 	// catCmd.PersistentFlags().String("foo", "", "A help for foo")
