@@ -51,6 +51,10 @@ var catCmd = &cobra.Command{
 	},
 }
 
+func GetCatCmd() *cobra.Command {
+	return catCmd
+}
+
 func init() {
 	rootCmd.AddCommand(catCmd)
 
