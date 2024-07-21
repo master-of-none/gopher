@@ -25,6 +25,7 @@ func runCatCommand(args []string) (string, error) {
 	catCmd.SetArgs(args[1:])
 
 	err := catCmd.Execute()
+
 	return buf.String(), err
 }
 
