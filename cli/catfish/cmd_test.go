@@ -19,12 +19,11 @@ func readFile(path string) (string, error) {
 func runCatCommand(args []string) (string, error) {
 
 	buf := new(bytes.Buffer)
-	catCmd := cmd.GetCatCmd()
-	catCmd.SetOut(buf)
-	catCmd.SetErr(buf)
-	catCmd.SetArgs(args[0:])
-
-	err := catCmd.Execute()
+	rootCmd := cmd.GetCatCmd()
+	rootCmd.SetOut(buf)
+	rootCmd.SetErr(buf)
+	rootCmd.SetArgs(args[0:])
+	err := rootCmd.Execute()
 
 	return buf.String(), err
 }

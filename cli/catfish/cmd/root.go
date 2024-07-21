@@ -4,39 +4,69 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"bufio"
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 )
 
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:   "catfish",
-	Short: "This is a clone of the cat command to display file contents",
-	Long:  `A simple implementation of the cat command using Cobra CLI library in Go.`,
+// catCmd represents the cat command
+var catfish = &cobra.Command{
+	Use:   "cat [filename]",
+	Short: "Display contents of file",
+	Long:  `A simple implementation of the cat command to display the content of a file.`,
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		filename := args[0]
+		showNonBlankLineNum, _ := cmd.Flags().GetBool("number-notblank")
+		showLineNum, _ := cmd.Flags().GetBool("number")
+		file, err := os.Open(filename)
 
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+		if err != nil {
+			fmt.Printf("Error in opening the file %v\n", err)
+			os.Exit(1)
+		}
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+		lineNumber := 1
+		for scanner.Scan() {
+			// fmt.Println(scanner.Text())
+			line := scanner.Text()
+			if showNonBlankLineNum && len(line) > 0 {
+				fmt.Printf("%5d  %s\n", lineNumber, line)
+				lineNumber++
+			} else if showLineNum {
+				fmt.Printf("%5d %s\n", lineNumber, line)
+				lineNumber++
+			} else if !showNonBlankLineNum {
+				fmt.Println(line)
+			}
+		}
+
+		if err := scanner.Err(); err != nil {
+			fmt.Printf("Error in reading the file %v\n", err)
+		}
+	},
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	err := rootCmd.Execute()
-	if err != nil {
-		os.Exit(1)
-	}
+func GetCatCmd() *cobra.Command {
+	return rootCmd
 }
 
 func init() {
+	rootCmd.AddCommand(catfish)
+
 	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
+	catfish.Flags().BoolP("number-notblank", "b", false, "Number of non blank output lines")
+	catfish.Flags().BoolP("number", "n", false, "Number output lines")
+	// Cobra supports Persistent Flags which will work for this command
+	// and all subcommands, e.g.:
+	// catCmd.PersistentFlags().String("foo", "", "A help for foo")
 
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.catfish.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// Cobra supports local flags which will only run when this command
+	// is called directly, e.g.:
+	// catCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
+
