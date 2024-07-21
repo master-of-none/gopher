@@ -22,7 +22,7 @@ func runCatCommand(args []string) (string, error) {
 	catCmd := cmd.GetCatCmd()
 	catCmd.SetOut(buf)
 	catCmd.SetErr(buf)
-	catCmd.SetArgs(args[1:])
+	catCmd.SetArgs(args[0:])
 
 	err := catCmd.Execute()
 
