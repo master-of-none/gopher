@@ -16,7 +16,7 @@ var catfish = &cobra.Command{
 	Use:   "cat [filename]",
 	Short: "Display contents of file",
 	Long:  `A simple implementation of the cat command to display the content of a file.`,
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
 		filename := args[0]
 		showNonBlankLineNum, _ := cmd.Flags().GetBool("number-notblank")
@@ -52,21 +52,12 @@ var catfish = &cobra.Command{
 }
 
 func GetCatCmd() *cobra.Command {
-	return rootCmd
+	return catfish
 }
 
-func init() {
-	rootCmd.AddCommand(catfish)
-
-	// Here you will define your flags and configuration settings.
-	catfish.Flags().BoolP("number-notblank", "b", false, "Number of non blank output lines")
-	catfish.Flags().BoolP("number", "n", false, "Number output lines")
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// catCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// catCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+func Execute() {
+	if err := catfish.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
-
