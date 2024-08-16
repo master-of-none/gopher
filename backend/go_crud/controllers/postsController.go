@@ -49,3 +49,41 @@ func PostsShow(ctx *gin.Context) {
 		"post": post,
 	})
 }
+
+func PostUpdate(ctx *gin.Context) {
+	//Get id
+	id := ctx.Param("id")
+
+	//Get data
+	var body struct {
+		Body  string
+		Title string
+	}
+	ctx.Bind(&body)
+
+	// Find
+	var post models.Post
+	initializers.DB.First(&post, id)
+
+	//Update
+	initializers.DB.Model(&post).Updates(models.Post{
+		Title: body.Title,
+		Body:  body.Body,
+	})
+	//Respons
+	ctx.JSON(200, gin.H{
+		"post": post,
+	})
+
+}
+
+func PostDelete(ctx *gin.Context) {
+	// Get ID
+	id := ctx.Param("id")
+
+	// Delete
+	initializers.DB.Delete(&models.Post{}, id)
+
+	// Respond
+	ctx.Status(200)
+}
