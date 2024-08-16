@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/master-of-none/go_jwt/controllers"
 	"github.com/master-of-none/go_jwt/initializers"
 )
 
@@ -19,6 +20,7 @@ func main() {
 			"message": "Hello There",
 		})
 	})
+	r.POST("/signup", controllers.SignUp)
 
 	r.Run()
 }
