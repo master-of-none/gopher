@@ -1,12 +1,28 @@
 import { ApolloServer } from "@apollo/server";
 import { startStandaloneServer } from "@apollo/server/standalone";
 import { typeDefs } from "./schema";
+import db from "./_db";
 // Server Setup
 
+// Resolver Constant
+const resolvers = {
+    Query: {
+        games() {
+            return db.games;
+        },
+        reviews() {
+            return db.reviews;
+        },
+        authors() {
+            return db.authors;
+        },
+    },
+};
 const server = new ApolloServer({
     // TypeDef
     typeDefs,
     //Resolvers
+    resolvers,
 });
 
 const { url } = await startStandaloneServer(server, {
