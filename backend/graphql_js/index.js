@@ -16,6 +16,9 @@ const resolvers = {
         authors() {
             return db.authors;
         },
+        review(_, args) {
+            return db.reviews.find((review) => review.id === args.id);
+        },
     },
 };
 const server = new ApolloServer({
