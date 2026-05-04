@@ -3,7 +3,8 @@ package model
 import "time"
 
 type URL struct {
-	ShortURL  string
+	ID        int64
+	ShortCode string
 	LongURL   string
 	ExpiresAt *time.Time
 	CreatedAt *time.Time

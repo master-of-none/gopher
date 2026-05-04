@@ -10,8 +10,10 @@ import (
 	"time"
 	"url-shortner/db"
 	"url-shortner/method"
+	rds "url-shortner/redis"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/redis/go-redis/v9"
 )
 
 type Shorten struct {
@@ -27,7 +29,7 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func writeJSON(w http.ResponseWriter, status int, data any) {
+func WriteJSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(data)
@@ -38,7 +40,7 @@ func shorten(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&req)
 
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, ErrorResponse{
+		WriteJSON(w, http.StatusBadRequest, ErrorResponse{
 			Error: "Invalid JSON Body",
 		})
 		return
@@ -46,7 +48,7 @@ func shorten(w http.ResponseWriter, r *http.Request) {
 
 	url := req.URL
 	if url == "" {
-		writeJSON(w, http.StatusBadRequest, ErrorResponse{
+		WriteJSON(w, http.StatusBadRequest, ErrorResponse{
 			Error: "missing URL",
 		})
 		// http.Error(w, "missing URL", http.StatusBadRequest)
@@ -58,23 +60,30 @@ func shorten(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var expiresAt *time.Time
-	var createdAt = time.Now()
+	var createdAt = time.Now().UTC()
 
 	expiry := r.URL.Query().Get("expiry")
 	if expiry != "" {
-		minutes, _ := strconv.Atoi(expiry)
-		t := time.Now().Add(time.Duration(minutes) * time.Minute)
+		minutes, err := strconv.Atoi(expiry)
+		if err != nil {
+			WriteJSON(w, http.StatusBadRequest, ErrorResponse{
+				Error: "Invalid Expiry time",
+			})
+			return
+		}
+
+		t := time.Now().UTC().Add(time.Duration(minutes) * time.Minute)
 		expiresAt = &t
 	} else {
-		t := time.Now().Add(time.Duration(1) * time.Minute)
+		t := time.Now().UTC().Add(time.Duration(1) * time.Minute)
 		expiresAt = &t
 	}
 	var id int64
 
-	err = db.Conn.QueryRow(context.Background(), "SELECT nextval(pg_get_serial_sequence('urls','id'))").Scan(&id)
+	err = db.Pool.QueryRow(context.Background(), "SELECT nextval(pg_get_serial_sequence('urls','id'))").Scan(&id)
 	if err != nil {
 		fmt.Println("DB error", err)
-		writeJSON(w, http.StatusInternalServerError, ErrorResponse{
+		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{
 			Error: "Failed to Generate ID",
 		})
 		// http.Error(w, "Failed to Generate ID", http.StatusInternalServerError)
@@ -82,12 +91,13 @@ func shorten(w http.ResponseWriter, r *http.Request) {
 	}
 
 	code := method.EncodeBase62(id)
-	_, err = db.Conn.Exec(context.Background(), "INSERT INTO urls (id, short_code, long_url, expires_at, created_at) VALUES ($1, $2, $3, $4, $5)",
+	_, err = db.Pool.Exec(context.Background(), "INSERT INTO urls (id, short_code, long_url, expires_at, created_at) VALUES ($1, $2, $3, $4, $5)",
 		id, code, url, expiresAt, createdAt,
 	)
+
 	if err != nil {
 		fmt.Println("Insert Error:", err)
-		writeJSON(w, http.StatusInternalServerError, ErrorResponse{
+		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{
 			Error: "Insert Error",
 		})
 		// http.Error(w, "Insert Error", http.StatusInternalServerError)
@@ -97,16 +107,28 @@ func shorten(w http.ResponseWriter, r *http.Request) {
 	// fmt.Fprintf(w, "short: http://localhost:8080/%s\n", code)
 	shortURL := fmt.Sprintf("http://localhost:8080/%s", code)
 	w.Header().Set("Location", shortURL)
-	writeJSON(w, http.StatusCreated, ShortenResponse{
+	WriteJSON(w, http.StatusCreated, ShortenResponse{
 		ShortURL: shortURL,
 		Code:     code,
 	})
+
 }
 
 func redirect(w http.ResponseWriter, r *http.Request) {
 	code := chi.URLParam(r, "code")
 
-	row := db.Conn.QueryRow(context.Background(),
+	// Redis
+	ctx := r.Context()
+
+	if val, err := rds.Get(ctx, code); err == nil {
+		fmt.Println("Redis Hit")
+		http.Redirect(w, r, val, http.StatusFound)
+		return
+	} else if err != redis.Nil {
+		fmt.Println("Redis Error:", err)
+	}
+
+	row := db.Pool.QueryRow(ctx,
 		"SELECT long_url, expires_at FROM urls where short_code=$1", code,
 	)
 	var longURL string
@@ -115,7 +137,7 @@ func redirect(w http.ResponseWriter, r *http.Request) {
 	err := row.Scan(&longURL, &expiresAt)
 
 	if err != nil {
-		writeJSON(w, http.StatusNotFound, ErrorResponse{
+		WriteJSON(w, http.StatusNotFound, ErrorResponse{
 			Error: "URL Not Found",
 		})
 		// http.NotFound(w, r)
@@ -123,13 +145,21 @@ func redirect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if expiresAt != nil && time.Now().After(*expiresAt) {
-		writeJSON(w, http.StatusGone, ErrorResponse{
+		WriteJSON(w, http.StatusGone, ErrorResponse{
 			Error: "Link has been Expired",
 		})
 		// http.Error(w, "Link has been Expired", http.StatusGone)
 		return
 	}
 
+	if expiresAt != nil {
+		ttl := expiresAt.Sub(time.Now().UTC())
+		fmt.Println("Time to Live is:", ttl)
+
+		_ = rds.Set(ctx, code, longURL, ttl)
+	} else {
+		_ = rds.Set(ctx, code, longURL, 0)
+	}
 	http.Redirect(w, r, longURL, http.StatusFound)
 }
 

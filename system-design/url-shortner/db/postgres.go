@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
 
-var Conn *pgx.Conn
+var Pool *pgxpool.Pool
 
 func InitDB() {
 	err := godotenv.Load()
@@ -19,7 +19,7 @@ func InitDB() {
 	connStr := os.Getenv("DATABASE_URL")
 	// fmt.Println("DATABASE_URL =", connStr)
 
-	Conn, err = pgx.Connect(context.Background(), connStr)
+	Pool, err = pgxpool.New(context.Background(), connStr)
 
 	if err != nil {
 		panic(err)
@@ -29,12 +29,12 @@ func InitDB() {
 }
 
 func CloseDB() {
-	if Conn != nil {
-		Conn.Close(context.Background())
+	if Pool != nil {
+		Pool.Close()
 	}
 }
 
 func DeleteExpired(ctx context.Context) error {
-	_, err := Conn.Exec(ctx, "DELETE FROM urls WHERE expires_at IS NOT NULL AND expires_at < NOW()")
+	_, err := Pool.Exec(ctx, "DELETE FROM urls WHERE expires_at IS NOT NULL AND expires_at < NOW()")
 	return err
 }
