@@ -1,8 +1,8 @@
-package main
+package loops
 
 import "fmt"
 
-func main() {
+func loop1() {
 	sum := 0
 
 	for i := 0; i < 5; i++ {

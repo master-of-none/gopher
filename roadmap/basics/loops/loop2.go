@@ -1,8 +1,8 @@
-package main
+package loops
 
 import "fmt"
 
-func main() {
+func loop2() {
 	var nums [4]int
 	nums[0] = 1
 	nums[1] = 2
