@@ -56,11 +56,12 @@ func shorten(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-		url = "http://" + url
+		url = "https://" + url
 	}
 
-	var expiresAt *time.Time
-	var createdAt = time.Now().UTC()
+	now := time.Now().UTC()
+	var expiresAt time.Time
+	var createdAt = now
 
 	expiry := r.URL.Query().Get("expiry")
 	if expiry != "" {
@@ -72,11 +73,11 @@ func shorten(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		t := time.Now().UTC().Add(time.Duration(minutes) * time.Minute)
-		expiresAt = &t
+		t := now.Add(time.Duration(minutes) * time.Minute)
+		expiresAt = t
 	} else {
-		t := time.Now().UTC().Add(time.Duration(1) * time.Minute)
-		expiresAt = &t
+		t := now.Add(1 * time.Minute)
+		expiresAt = t
 	}
 	var id int64
 
@@ -120,6 +121,8 @@ func redirect(w http.ResponseWriter, r *http.Request) {
 	// Redis
 	ctx := r.Context()
 
+	now := time.Now().UTC()
+
 	if val, err := rds.Get(ctx, code); err == nil {
 		fmt.Println("Redis Hit")
 		http.Redirect(w, r, val, http.StatusFound)
@@ -132,7 +135,7 @@ func redirect(w http.ResponseWriter, r *http.Request) {
 		"SELECT long_url, expires_at FROM urls where short_code=$1", code,
 	)
 	var longURL string
-	var expiresAt *time.Time
+	var expiresAt time.Time
 
 	err := row.Scan(&longURL, &expiresAt)
 
@@ -144,7 +147,7 @@ func redirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if expiresAt != nil && time.Now().After(*expiresAt) {
+	if now.After(expiresAt) {
 		WriteJSON(w, http.StatusGone, ErrorResponse{
 			Error: "Link has been Expired",
 		})
@@ -152,8 +155,10 @@ func redirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if expiresAt != nil {
-		ttl := expiresAt.Sub(time.Now().UTC())
+	zeroTime := time.Time{}
+
+	if expiresAt != zeroTime {
+		ttl := expiresAt.Sub(now)
 		fmt.Println("Time to Live is:", ttl)
 
 		_ = rds.Set(ctx, code, longURL, ttl)

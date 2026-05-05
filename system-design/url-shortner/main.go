@@ -20,11 +20,14 @@ import (
 
 func main() {
 	db.InitDB()
+	defer db.CloseDB()
 	rds.InitRedis()
+	defer rds.CloseRedis()
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
 	r.Use(mw.RateLimiter)
+	r.Use(mw.CORSMiddleware)
 	r.Use(middleware.Recoverer)
 
 	handler.RegisterRoutes(r)
@@ -59,7 +62,5 @@ func main() {
 		fmt.Println("Cleanup Error:", err)
 	}
 
-	db.CloseDB()
-	rds.CloseRedis()
 	fmt.Println("Cleanup complete")
 }
