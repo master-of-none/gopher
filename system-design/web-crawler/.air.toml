@@ -1,0 +1,14 @@
+#:schema https://json.schemastore.org/any.json
+#:tombi schema.strict = false
+
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "go build -o tmp/main ./crawler"
+bin = "tmp/main"
+include_ext = ["go"]
+exclude_dir = ["tmp", "vendor"]
+
+[log]
+time = true
