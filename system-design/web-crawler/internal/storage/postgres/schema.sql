@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS urls (
+  id BIGSERIAL PRIMARY KEY,
+  url TEXT UNIQUE NOT NULL,
+  status TEXT DEFAULT 'pending',
+  depth INT DEFAULT 0,
+  discovered_at TIMESTAMP DEFAULT NOW(),
+  crawled_at TIMESTAMP
+);

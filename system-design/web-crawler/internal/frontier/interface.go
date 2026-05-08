@@ -1,6 +1,9 @@
 package frontier
 
+import "context"
+
 type Frontier interface {
-	Push(url string)
-	Pop() string
+	Push(task CrawlTask) error
+	Pop() CrawlTask
+	PopContext(ctx context.Context) (CrawlTask, bool)
 }

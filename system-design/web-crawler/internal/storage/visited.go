@@ -24,3 +24,17 @@ func (v *Visited) Seen(url string) bool {
 	v.data[url] = struct{}{}
 	return false
 }
+
+func (v *Visited) MarkInProgress(url string) bool {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+
+	if _, ok := v.data[url]; ok {
+		return false
+	}
+	return true
+}
+
+func (v *Visited) RemoveInProgress(url string) error {
+	return nil
+}
