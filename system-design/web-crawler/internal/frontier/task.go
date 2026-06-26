@@ -1,6 +1,6 @@
 package frontier
 
 type CrawlTask struct {
-	URL   string
-	Depth int
+	URL   string `json:"url"`
+	Depth int    `json:"depth"`
 }
